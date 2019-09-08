@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+  <!-- Basic Page Needs
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <meta charset="utf-8">
+  <title>Spectral Clustering on Graphs</title>
+  <meta name="description" content="">
+  <meta name="author" content="Dominik Schmidt">
+
+  <!-- Mobile Specific Metas
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- FONT
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
+
+  <!-- CSS
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <link rel="stylesheet" href="css/normalize.css">
+  <link rel="stylesheet" href="css/skeleton.css">
+
+  <!-- Favicon
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <link rel="icon" type="image/png" href="favicon.png">
+
+  <style>
+    canvas {
+      /*border: 1px solid #000000;*/
+      margin-top: 1.8rem;
+    }
+    body {
+      text-align: center;
+      padding: 0;
+      margin: 0;
+    }
+    h2 {
+      margin-top: 3.4rem;
+    }
+    .settings {
+      padding: 0 5%;
+      text-align: left;
+    }
+    select, input {
+        height: 90% !important;
+    }
+    .checkboxc {
+        display: block;
+        height: 1.5rem !important;
+    }
+
+
+    .wrap-collabsible {
+        margin-bottom: 1.2rem;
+    }
+
+    #collapsible {
+        display: none;
+    }
+
+    .lbl-toggle {
+        display: block;
+
+        padding: 1rem;
+
+        cursor: pointer;
+
+        border-radius: 7px;
+        transition: all 0.25s ease-out;
+    }
+
+
+    .lbl-toggle::before {
+        content: ' ';
+        display: inline-block;
+
+        border-top: 5px solid transparent;
+        border-bottom: 5px solid transparent;
+        border-left: 5px solid currentColor;
+        vertical-align: middle;
+        margin-right: .7rem;
+        transform: translateY(-2px);
+
+        transition: transform .2s ease-out;
+    }
+
+    .toggle:checked + .lbl-toggle::before {
+        transform: rotate(90deg) translateX(-3px);
+    }
+
+    .collapsible-content {
+        max-height: 0px;
+        overflow: hidden;
+        transition: max-height .25s ease-in-out;
+    }
+
+    .toggle:checked + .lbl-toggle + .collapsible-content {
+        max-height: 350px;
+    }
+
+    .toggle:checked + .lbl-toggle {
+        border-bottom-right-radius: 0;
+        border-bottom-left-radius: 0;
+    }
+
+    .collapsible-content .content-inner {
+        border-bottom-left-radius: 7px;
+        border-bottom-right-radius: 7px;
+        padding: .5rem 1rem;
+    }
+  </style>
+
+</head>
+<body>
+
+  <!-- Primary Page Layout
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+
+  <div class="container">
+    <div class="row">
+      <h2>Spectral Clustering on Graphs Experiment</h2>
+      <a class="button button-primary" href="./../../">Back to dominikschmidt.xyz</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="row">
+      <canvas id="graphcanvas" width="500" height="500"></canvas>
+      <canvas id="dispcanvas" width="500" height="500"></canvas>
+    </div>
+  </div>
+
+  <div class="container settings">
+      <div class="row">
+        <div class="six columns">
+
+        <fieldset>
+          <legend>Settings</legend>
+
+          Graph:
+          <select onchange="loadGraph(this.value)">
+            <option value="g1">g1</option>
+            <option value="K3K3">K3K3</option>
+            <option value="PYR3">PYR3</option>
+            <option value="PYR4">PYR4</option>
+            <option value="PYR5">PYR5</option>
+            <option value="K3">K3</option>
+            <option value="K5">K5</option>
+            <option value="K2_2">K2_2</option>
+            <option value="K2_4">K2_4</option>
+            <option value="R0">R0</option>
+            <option value="R1">R1</option>
+            <option value="R2">R2</option>
+            <option value="R3">R3</option>
+            <option value="R4">R4</option>
+            <option value="L0">L0</option>
+            <option value="L1">L1</option>
+            <option value="p4">p4</option>
+            <option value="bidakis_cube">bidakis_cube</option>
+            <option value="golomb_graph">golomb_graph</option>
+          </select><br>
+
+          Plot mode:
+          <select id="plotMode" onchange="setPlotMode(this.value)">
+            <option value="eigenvalues">Eigenvalues</option>
+            <option value="eigenvectors">Eigenvectors</option>
+            <option value="adjacencymatrix">Adjacency matrix</option>
+            <option value="degreematrix">Degree Matrix</option>
+            <option value="laplacianmatrix">Laplacian Matrix</option>
+          </select><br>
+
+          Clustering:
+          <input type="range" id="clusteringKRange"
+                 name="clusteringKRange" min="1" max="10" value="1"
+                 oninput="clusteringKamount.value=clusteringKRange.value; setClusteringk(this.value)">
+          k=<output name="clusteringKamount" id="clusteringKamount" for="clusteringKRange">1</output><br>
+
+            <button class="button button-primary" onclick="recolor()">Recolor</button>
+            <button class="button button-primary" onclick="relayout()">Relayout</button>
+
+        </fieldset>
+
+        </div>
+
+        <div class="six columns">
+
+        <fieldset>
+          <legend>Graph Characteristics</legend>
+
+          <span id="componentCount"></span><br>
+          <span id="clusterCount"></span><br>
+          <span id="spectralGap"></span>
+
+        </fieldset>
+
+            <div class="wrap-collabsible">
+                <input id="collapsible" class="toggle" type="checkbox">
+                <label for="collapsible" class="lbl-toggle">Advanced Settings</label>
+                <div class="collapsible-content">
+                    <div class="content-inner">
+                        <fieldset>
+
+                            Animation speed:
+                            <input type="number" value="5" onchange="setUpdateSteps(this.value)"><br>
+                            Preadjust graph layout <input type="checkbox" class="checkboxc" onchange="setPreadjustGraph(this.checked)" checked><br>
+                            Suggest cluster-k on graph loading <input type="checkbox" class="checkboxc" onchange="setResetClusterK(this.checked)" checked><br>
+                            Kmeans restarts: <input type="number" value="20" onchange="setKmeansRestarts(this.value)"><br>
+                            Layout finder restarts: <input type="number" value="10" onchange="setDynamicsFinderRestarts(this.value)"><br>
+
+                        </fieldset>
+                    </div>
+                </div>
+            </div>
+
+
+
+        </div>
+      </div>
+  </div>
+
+
+<!-- End Document
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+
+  <script src="ml.js"></script>
+  <!--<script src="http://mlweb.loria.fr/lalolib.js"></script>-->
+  <script src="util.js"></script>
+  <script src="graph.js"></script>
+  <script src="builtin_graphs.js"></script>
+  <script src="ui.js"></script>
+  <script src="script.js"></script>
+
+</body>
+</html>

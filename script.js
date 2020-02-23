@@ -32,8 +32,9 @@ function loop() {
     graph.dynamics.updateN(updateSteps, 1);
     gctx.clearRect(-2000, -2000, 4000, 4000);
     graph.plot(graphcanvas, gctx);
+    setPlotMode(document.getElementById("plotMode").value);
 }
 
-setInterval(loop, 17);
+setInterval(loop, 16);
 
 console.log("Hi!");
